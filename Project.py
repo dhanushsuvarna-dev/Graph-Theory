@@ -1,138 +1,263 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 
-# -------------------------------
+# -----------------------------------
 # Users
-# -------------------------------
-users = ["Arjun", "Rahul", "Neha", "Aisha", "Kiran", "Pooja"]
+# -----------------------------------
 
-# -------------------------------
+users = [
+    "Arjun",
+    "Rahul",
+    "Neha",
+    "Kiran",
+    "Pooja"
+]
+
+# -----------------------------------
 # Movie Ratings Dataset
-# -------------------------------
+# -----------------------------------
+
 ratings = {
+
     "Arjun": {
         "KGF 2": 5,
-        "Interstellar": 5,
-        "John Wick": 5,
-        "Inception": 5,
-        "Avengers Endgame": 5
+        "Chhichhore": 4,
+        "Barbie": 2,
+        "Jab We Met": 3,
+        "Avengers 4": 4.5
     },
 
     "Rahul": {
         "KGF 2": 5,
-        "Animal": 5,
-        "Chhichhore": 5,
-        "Spider-Man NWH": 5,
-        "Kalki 2898 AD": 5
+        "Chhichhore": 4,
+        "Barbie": 3,
+        "Jab We Met": 5,
+        "Avengers 4": 4
     },
 
     "Neha": {
-        "YJHD": 5,
-        "Barbie": 5,
-        "Jab We Met": 5,
-        "ZNMD": 5,
-        "Your Name": 5
+        "KGF 2": 4,
+        "Chhichhore": 3,
+        "Barbie": 4,
+        "Jab We Met": 3.5,
+        "Avengers 4": 3.5
     },
 
-    "Aisha": {
-        "Little Women": 5,
-        "Barbie": 5,
-        "Interstellar": 5,
-        "Your Name": 5,
-        "Dune": 5
-    },
 
     "Kiran": {
-        "Interstellar": 5,
-        "Inception": 5,
-        "Dune": 5,
-        "The Matrix": 5,
-        "Spider-Verse": 5
+        "KGF 2": 5,
+        "Chhichhore": 4.5,
+        "Barbie": 1,
+        "Jab We Met": 2,
+        "Avengers 4": 3.5
     },
 
     "Pooja": {
-        "3 Idiots": 5,
-        "Spider-Man NWH": 5,
-        "ZNMD": 5,
+        "KGF 2": 1,
         "Chhichhore": 5,
-        "Your Name": 4
+        "Barbie": 3,
+        "Jab We Met": 5,
+        "Avengers 4": 2.5
     }
 }
 
-# -------------------------------
-# Create Bipartite Graph
-# -------------------------------
+# -----------------------------------
+# Create Graph
+# -----------------------------------
+
 G = nx.Graph()
 
-# Add user nodes
-for user in users:
-    G.add_node(user, bipartite=0, color='lightblue')
+# -----------------------------------
+# Add User Nodes
+# -----------------------------------
 
-# Add movie nodes and edges
+for user in users:
+
+    G.add_node(
+        user,
+        bipartite=0,
+        color="skyblue"
+    )
+
+# -----------------------------------
+# Add Movie Nodes and Edges
+# -----------------------------------
+
 for user, movies in ratings.items():
+
     for movie, rating in movies.items():
 
-        G.add_node(movie, bipartite=1, color='lightgreen')
+        G.add_node(
+            movie,
+            bipartite=1,
+            color="red"
+        )
 
-        # Edge between user and movie
-        G.add_edge(user, movie, weight=rating)
+        G.add_edge(
+            user,
+            movie,
+            weight=rating
+        )
 
-# -------------------------------
+# -----------------------------------
+# Add New User : Ashton Hall
+# -----------------------------------
+
+new_user = "Ashton Hall"
+
+G.add_node(
+    new_user,
+    bipartite=0,
+    color="yellow"
+)
+
+# -----------------------------------
+# Calculate Total Movie Weights
+# -----------------------------------
+
+movie_scores = {}
+
+for node in G.nodes():
+
+    if node not in users and node != new_user:
+
+        total_weight = 0
+
+        for neighbor in G.neighbors(node):
+
+            total_weight += G[node][neighbor]['weight']
+
+        movie_scores[node] = total_weight
+
+# -----------------------------------
+# Find Top 2 Movies
+# -----------------------------------
+
+top_movies = sorted(
+    movie_scores.items(),
+    key=lambda x: x[1],
+    reverse=True
+)
+
+top_2_movies = top_movies[:2]
+
+# -----------------------------------
+# Connect Ashton Hall to Top Movies
+# -----------------------------------
+
+for movie, score in top_2_movies:
+
+    G.add_edge(
+        new_user,
+        movie,
+        weight=score
+    )
+
+# -----------------------------------
+# Calculate Node Sizes
+# -----------------------------------
+
+node_sizes = []
+
+for node in G.nodes():
+
+    # Existing Users
+    if node in users:
+
+        node_sizes.append(2500)
+
+    # Ashton Hall
+    elif node == new_user:
+
+        node_sizes.append(3500)
+
+    # Movies
+    else:
+
+        total_weight = 0
+
+        for neighbor in G.neighbors(node):
+
+            total_weight += G[node][neighbor]['weight']
+
+        movie_size = total_weight * 200
+
+        node_sizes.append(movie_size)
+
+# -----------------------------------
+# Node Colors
+# -----------------------------------
+
+node_colors = []
+
+for node in G.nodes():
+
+    node_colors.append(
+        G.nodes[node]['color']
+    )
+
+# -----------------------------------
+# Graph Layout
+# -----------------------------------
+
+plt.figure(figsize=(16, 10))
+
+pos = nx.spring_layout(
+    G,
+    k=1.2,
+    iterations=200,
+    seed=42,
+    weight='weight'
+)
+
+# -----------------------------------
 # Draw Graph
-# -------------------------------
-colors = [G.nodes[node]['color'] for node in G.nodes()]
-
-plt.figure(figsize=(14, 10))
-
-pos = nx.spring_layout(G, seed=42)
+# -----------------------------------
 
 nx.draw(
     G,
     pos,
     with_labels=True,
-    node_color=colors,
-    node_size=2000,
-    font_size=8
+    node_color=node_colors,
+    node_size=node_sizes,
+    font_size=9,
+    font_color="black",
+    font_weight='bold'
 )
 
-# Edge labels (ratings)
-edge_labels = nx.get_edge_attributes(G, 'weight')
+# -----------------------------------
+# Draw Edge Labels
+# -----------------------------------
+
+edge_labels = nx.get_edge_attributes(
+    G,
+    'weight'
+)
 
 nx.draw_networkx_edge_labels(
     G,
     pos,
-    edge_labels=edge_labels
+    edge_labels=edge_labels,
+    font_size=8
 )
 
-plt.title("Movie Recommendation Graph")
+# -----------------------------------
+# Title
+# -----------------------------------
+
+plt.title(
+    "Graph Based Movie Recommendation System",
+    fontsize=16
+)
+
 plt.show()
 
-# -------------------------------
-# Simple Recommendation Logic
-# -------------------------------
-print("\nMovie Recommendations:\n")
+# -----------------------------------
+# Print Recommendations
+# -----------------------------------
 
-for user in users:
+print("\nRecommended Movies for Ashton Hall:\n")
 
-    watched = set(ratings[user].keys())
+for movie, score in top_2_movies:
 
-    recommendations = []
-
-    for other_user in users:
-
-        if other_user != user:
-
-            other_movies = set(ratings[other_user].keys())
-
-            common_movies = watched.intersection(other_movies)
-
-            # If users have common interests
-            if len(common_movies) >= 2:
-
-                recommended = other_movies - watched
-
-                recommendations.extend(recommended)
-
-    recommendations = list(set(recommendations))
-
-    print(user, "->", recommendations)
+    print(movie, "-> Total Rating Score:", score)
